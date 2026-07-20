@@ -58,7 +58,7 @@ class VaultServiceTest {
         when(vaultEntryRepository.findByUserId(1L)).thenReturn(List.of(entry));
         when(aesEncryptor.decrypt("enc", "iv", aesKey)).thenReturn("qwerty123");
         when(auditService.isPwned("qwerty123")).thenReturn(false);
-        when(auditService.isDuplicate(1L, 1L, "qwerty123")).thenReturn(false);
+        when(auditService.isDuplicate(any(), any(), any(), any())).thenReturn(false);
 
         var result = vaultService.getEntries("test@mail.com", "master");
 
@@ -97,7 +97,7 @@ class VaultServiceTest {
         });
         when(aesEncryptor.decrypt("enc", "iv", aesKey)).thenReturn("qwerty123");
         when(auditService.isPwned(any())).thenReturn(false);
-        when(auditService.isDuplicate(any(), any(), any())).thenReturn(false);
+        when(auditService.isDuplicate(any(), any(), any(), any())).thenReturn(false);
 
         var result = vaultService.createEntry("test@mail.com", "master",
                 new VaultEntryRequest("github.com", "user", "qwerty123"));

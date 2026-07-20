@@ -27,9 +27,7 @@ public class VaultService {
     public List<VaultEntryResponse> getEntries(String email, String masterPassword) {
         User user = getAuthenticatedUser(email, masterPassword);
         byte[] aesKey = pbkdf2Util.deriveEncryptionKey(masterPassword, user.getSalt());
-
-        return vaultEntryRepository.findByUserId(user.getId())
-                .stream()
+        return vaultEntryRepository.findByUserId(user.getId()).stream()
                 .map(entry -> toResponse(entry, aesKey))
                 .toList();
     }
@@ -51,6 +49,7 @@ public class VaultService {
                 .encryptedPassword(encrypted.encryptedPassword())
                 .iv(encrypted.iv())
                 .build();
+
 
         VaultEntry saved = vaultEntryRepository.save(entry);
         return toResponse(saved, aesKey);
@@ -103,19 +102,14 @@ public class VaultService {
     }
 
     private VaultEntryResponse toResponse(VaultEntry entry, byte[] aesKey) {
-        String decrypted = aesEncryptor.decrypt(
-                entry.getEncryptedPassword(),
-                entry.getIv(),
-                aesKey
-        );
-
+        String decrypted = aesEncryptor.decrypt(entry.getEncryptedPassword(), entry.getIv(), aesKey);
         return new VaultEntryResponse(
                 entry.getId(),
                 entry.getSite(),
                 entry.getLogin(),
                 decrypted,
                 auditService.isPwned(decrypted),
-                auditService.isDuplicate(entry.getUser().getId(), entry.getId(), decrypted),
+                auditService.isDuplicate(entry.getUser().getId(), entry.getId(), decrypted, aesKey),
                 entry.getCreatedAt(),
                 entry.getUpdatedAt()
         );
