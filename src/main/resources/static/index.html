@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #0d0f12;
+            --surface:   #161a20;
+            --surface2:  #1e2330;
+            --border:    #2a303d;
+            --accent:    #4f8ef7;
+            --accent-dim:#1e3a6e;
+            --danger:    #e05c5c;
+            --warn:      #e0a84e;
+            --ok:        #4ecb7a;
+            --text:      #e8ecf4;
+            --muted:     #7a8599;
+            --mono:      'JetBrains Mono', monospace;
+            --sans:      'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ── NAV ── */
+        nav {
+            width: 100%;
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            background: var(--surface);
+        }
+        .nav-logo {
+            font-family: var(--mono);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--accent);
+            letter-spacing: .04em;
+        }
+        .nav-logo span { color: var(--muted); }
+        #nav-actions { display: flex; gap: .75rem; align-items: center; }
+        #nav-email { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+
+        /* ── SCREENS ── */
+        .screen { display: none; width: 100%; }
+        .screen.active { display: flex; }
+
+        /* ── AUTH ── */
+        #screen-auth {
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 52px);
+        }
+        .auth-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        .auth-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 1.75rem;
+        }
+        .auth-tabs {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: 1.75rem;
+        }
+        .tab {
+            flex: 1;
+            padding: .5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--sans);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .tab.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── VAULT ── */
+        #screen-vault {
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            gap: 1.25rem;
+            min-height: calc(100vh - 52px);
+        }
+        .vault-header {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+        }
+        #search {
+            flex: 1;
+        }
+        .entries-grid {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            gap: .625rem;
+        }
+        .entry-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: .5rem .75rem;
+            align-items: center;
+            transition: border-color .15s;
+        }
+        .entry-card:hover { border-color: #3a4255; }
+        .entry-site {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .entry-login {
+            color: var(--muted);
+            font-size: 13px;
+            font-family: var(--mono);
+        }
+        .entry-badges {
+            display: flex;
+            gap: .4rem;
+            align-items: center;
+            grid-column: 1;
+        }
+        .badge {
+            font-size: 11px;
+            font-family: var(--mono);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .badge-danger  { background: #3d1a1a; color: var(--danger); }
+        .badge-warn    { background: #3d2c10; color: var(--warn); }
+        .entry-actions {
+            display: flex;
+            gap: .4rem;
+            grid-column: 2;
+            grid-row: 1 / 3;
+            align-items: center;
+        }
+
+        /* ── PASSWORD FIELD ── */
+        .pw-row {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            grid-column: 1;
+        }
+        .pw-value {
+            font-family: var(--mono);
+            font-size: 13px;
+            letter-spacing: .08em;
+            color: var(--muted);
+        }
+        .pw-value.revealed { color: var(--text); }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.65);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 420px;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── FORM ELEMENTS ── */
+        .field { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1rem; }
+        label { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+        input {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14px;
+            padding: .6rem .75rem;
+            outline: none;
+            transition: border-color .15s;
+            width: 100%;
+        }
+        input:focus { border-color: var(--accent); }
+        input.mono { font-family: var(--mono); letter-spacing: .04em; }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: .55rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-family: var(--sans);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity .15s, background .15s;
+            white-space: nowrap;
+        }
+        .btn:hover { opacity: .85; }
+        .btn-primary  { background: var(--accent); color: #fff; }
+        .btn-ghost    { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-danger   { background: #3d1a1a; color: var(--danger); border: 1px solid #5c2020; }
+        .btn-icon     { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: .4rem .6rem; border-radius: 5px; font-size: 13px; }
+        .btn-icon:hover { color: var(--text); border-color: #3a4255; }
+        .btn-full { width: 100%; padding: .7rem; }
+        .btn-sm { padding: .35rem .65rem; font-size: 12px; }
+
+        .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+        /* ── GENERATOR ── */
+        .gen-output {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            font-family: var(--mono);
+            font-size: 14px;
+            letter-spacing: .06em;
+            word-break: break-all;
+            min-height: 44px;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+        .gen-options { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem; }
+        .gen-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .gen-row label { text-transform: none; font-size: 13px; color: var(--text); letter-spacing: 0; }
+        input[type=range] { flex: 1; accent-color: var(--accent); }
+        input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+        .gen-len-val { font-family: var(--mono); color: var(--accent); min-width: 24px; text-align: right; }
+
+        /* ── EMPTY STATE ── */
+        .empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--muted);
+        }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .empty p { font-size: 14px; margin-top: .5rem; }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed;
+            bottom: 1.5rem; right: 1.5rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .75rem 1.25rem;
+            font-size: 13px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: all .2s;
+            pointer-events: none;
+            z-index: 200;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── ERROR ── */
+        .error-msg {
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: -.5rem;
+            margin-bottom: .75rem;
+            min-height: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-logo">vault<span>/</span>manager</div>
+    <div id="nav-actions">
+        <span id="nav-email"></span>
+        <button class="btn btn-ghost btn-sm" id="btn-gen" style="display:none" onclick="openGenerator()">⚙ Generate</button>
+        <button class="btn btn-ghost btn-sm" id="btn-add" style="display:none" onclick="openAddModal()">+ Add</button>
+        <button class="btn btn-ghost btn-sm" id="btn-logout" style="display:none" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<!-- ══ AUTH ══════════════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+    <div class="auth-box">
+        <div class="auth-title">Welcome to Vault</div>
+        <div class="auth-tabs">
+            <button class="tab active" onclick="switchTab('login')">Sign in</button>
+            <button class="tab" onclick="switchTab('register')">Register</button>
+        </div>
+        <div class="field">
+            <label>Email</label>
+            <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <div class="field">
+            <label>Master password</label>
+            <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <div class="error-msg" id="auth-error"></div>
+        <button class="btn btn-primary btn-full" id="auth-submit" onclick="submitAuth()">Sign in</button>
+    </div>
+</div>
+
+<!-- ══ VAULT ═════════════════════════════════════════════════════ -->
+<div id="screen-vault" class="screen">
+    <div class="vault-header">
+        <input id="search" placeholder="Search by site or login…" oninput="renderEntries()"/>
+    </div>
+    <div class="entries-grid" id="entries-grid"></div>
+</div>
+
+<!-- ══ MODAL: ADD / EDIT ═════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-entry">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">New entry</div>
+        <div class="field">
+            <label>Site</label>
+            <input id="entry-site" placeholder="github.com"/>
+        </div>
+        <div class="field">
+            <label>Login</label>
+            <input id="entry-login" placeholder="username or email"/>
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <div style="display:flex;gap:.5rem">
+                <input id="entry-password" type="password" class="mono" placeholder="••••••••" style="flex:1"/>
+                <button class="btn btn-ghost btn-sm" onclick="fillFromGenerator()">Use generated</button>
+            </div>
+        </div>
+        <div class="error-msg" id="entry-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeEntryModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: GENERATOR ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-gen">
+    <div class="modal">
+        <div class="modal-title">Password generator</div>
+        <div class="gen-output" id="gen-output">—</div>
+        <div class="gen-options">
+            <div class="gen-row">
+                <label>Length</label>
+                <input type="range" id="gen-length" min="8" max="64" value="20" oninput="updateGenLen()"/>
+                <span class="gen-len-val" id="gen-len-val">20</span>
+            </div>
+            <div class="gen-row"><label>Uppercase (A–Z)</label><input type="checkbox" id="gen-upper" checked/></div>
+            <div class="gen-row"><label>Lowercase (a–z)</label><input type="checkbox" id="gen-lower" checked/></div>
+            <div class="gen-row"><label>Numbers (0–9)</label><input type="checkbox" id="gen-nums" checked/></div>
+            <div class="gen-row"><label>Symbols (!@#…)</label><input type="checkbox" id="gen-syms" checked/></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="generatePassword()" style="margin-bottom:.75rem">Regenerate</button>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeGenerator()">Close</button>
+            <button class="btn btn-primary" onclick="copyGenerated()">Copy</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
